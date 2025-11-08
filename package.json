@@ -1,0 +1,19 @@
+{
+  "name": "autoplay-blocker",
+  "version": "1.0.1",
+  "description": "Global Autoplay Blocker Chrome Extension with E2E tests",
+  "private": true,
+  "scripts": {
+    "test:e2e": "node tests/e2e/run-e2e.js .",
+    "install:playwright": "npx playwright install chromium"
+  },
+  "devDependencies": {
+    "playwright": "^1.55.1"
+  },
+  "keywords": [
+    "chrome-extension",
+    "autoplay-blocker"
+  ],
+  "author": "",
+  "license": "MIT"
+}
