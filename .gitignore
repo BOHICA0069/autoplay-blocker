@@ -1,0 +1,13 @@
+# Node modules
+node_modules/
+
+# Temporary E2E test data
+tests/e2e/.tmp-user-data/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,11 @@
+{
+  "name": "autoplay-blocker-e2e",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "e2e": "node tests/e2e/run-e2e.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.55.1"
+  }
+}
