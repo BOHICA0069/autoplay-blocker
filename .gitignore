@@ -1,0 +1,6 @@
+node_modules/
+tests/e2e/test-user-data/
+tests/e2e/test-pages/
+tests/e2e/*.png
+tests/e2e/*.log
+package-lock.json
