@@ -1,0 +1,117 @@
+// 🔢 Block counter
+let blockedCount = 0;
+let siteBlockedCounts = {};
+
+function incrementBlocked(reason, element) {
+  blockedCount++;
+
+  const domain = location.hostname.replace(/^www\./, "");
+  siteBlockedCounts[domain] = (siteBlockedCounts[domain] || 0) + 1;
+
+  console.log(`[Autoplay Blocker] Blocked #${blockedCount} (${domain}): ${reason}`, element);
+
+  try {
+    if (chrome.runtime?.id) {
+      chrome.runtime.sendMessage({
+        type: "updateStats",
+        total: blockedCount,
+        site: domain,
+        siteCount: siteBlockedCounts[domain]
+      });
+    }
+  } catch (e) {
+    console.warn("Extension context invalidated — message not sent", e);
+  }
+}
+
+
+// 🔒 Override native play() to block autoplay
+const originalPlay = HTMLMediaElement.prototype.play;
+
+HTMLMediaElement.prototype.play = function () {
+  if (!this.dataset.userInitiated) {
+    incrementBlocked("play() override", this);
+    return Promise.reject("Autoplay blocked");
+  }
+  return originalPlay.apply(this, arguments);
+};
+
+// 🧠 Mark user-initiated media
+["click", "keydown", "touchstart"].forEach(eventType => {
+  window.addEventListener(eventType, () => {
+    document.querySelectorAll("video, audio").forEach(media => {
+      media.dataset.userInitiated = "true";
+    });
+  }, true);
+});
+
+// 🧹 Strip autoplay attributes and pause media
+function blockMedia() {
+  const allElements = [...document.querySelectorAll("video, audio, iframe, embed, object")];
+
+  // Sweep shadow DOMs
+  document.querySelectorAll("*").forEach(el => {
+    if (el.shadowRoot) {
+      allElements.push(...el.shadowRoot.querySelectorAll("video, audio"));
+    }
+  });
+
+  allElements.forEach(media => {
+    if (media.tagName === "VIDEO" || media.tagName === "AUDIO") {
+      if (media.autoplay || media.hasAttribute("autoplay")) {
+        media.autoplay = false;
+        media.removeAttribute("autoplay");
+        incrementBlocked("autoplay attribute", media);
+      }
+      if (media.loop || media.hasAttribute("loop")) {
+        media.loop = false;
+        media.removeAttribute("loop");
+        incrementBlocked("loop attribute", media);
+      }
+      if (media.muted || media.hasAttribute("muted")) {
+        media.muted = false;
+        media.removeAttribute("muted");
+      }
+      if (!media.paused) {
+        media.pause();
+        requestAnimationFrame(() => {
+          try { media.pause(); } catch (e) {}
+        });
+        incrementBlocked("forced pause", media);
+      }
+    }
+
+    if (media.tagName === "IFRAME" || media.tagName === "EMBED" || media.tagName === "OBJECT") {
+      const src = media.src || "";
+      if (src.includes("autoplay=1")) {
+        media.src = src.replace("autoplay=1", "autoplay=0");
+        incrementBlocked("iframe autoplay param", media);
+      }
+    }
+  });
+}
+
+// 🕓 Run after load and on visibility change
+if (document.readyState !== "complete") {
+  window.addEventListener("load", () => setTimeout(blockMedia, 500));
+} else {
+  setTimeout(blockMedia, 500);
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    blockMedia();
+  }
+});
+
+// 🔁 Poll for 15 seconds to catch lazy media
+let pollCount = 0;
+const poller = setInterval(() => {
+  blockMedia();
+  pollCount++;
+  if (pollCount > 15) clearInterval(poller);
+}, 1000);
+
+// 👀 Observe DOM changes
+const observer = new MutationObserver(() => blockMedia());
+observer.observe(document.documentElement || document.body, { childList: true, subtree: true });

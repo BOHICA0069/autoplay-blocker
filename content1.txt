@@ -1,0 +1,38 @@
+chrome.storage.sync.get(["autoplayBlockEnabled"], function (result) {
+  console.log("[Autoplay Blocker] Content script loaded with autoplayEnabled:", result.autoplayBlockEnabled);
+
+  if (!result.autoplayBlockEnabled) return;
+
+  const blockMedia = () => {
+    const mediaElements = document.querySelectorAll("video, audio, iframe[src*='video'], iframe[src*='autoplay']");
+
+    mediaElements.forEach(media => {
+      if (media.tagName === "IFRAME") {
+        // Try to block iframe autoplay by rewriting src
+        const src = media.src;
+        if (src.includes("autoplay=1")) {
+          media.src = src.replace("autoplay=1", "autoplay=0");
+        }
+      } else {
+        media.autoplay = false;
+        media.removeAttribute("autoplay");
+        media.pause();
+
+        media.addEventListener("play", function () {
+          if (!media.dataset.userInitiated) {
+            media.pause();
+          }
+        }, true);
+
+        media.addEventListener("click", () => {
+          media.dataset.userInitiated = "true";
+        });
+      }
+    });
+  };
+
+  blockMedia();
+
+  const observer = new MutationObserver(() => blockMedia());
+  observer.observe(document.body, { childList: true, subtree: true });
+});

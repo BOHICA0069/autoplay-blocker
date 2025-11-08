@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 12px;
+      width: 260px;
+    }
+    .label {
+      font-weight: bold;
+      margin-top: 8px;
+    }
+    .value {
+      font-size: 20px;
+      color: #d00;
+    }
+    #controls {
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    button {
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      background: #f5f5f5;
+      cursor: pointer;
+    }
+    button:active { transform: translateY(1px); }
+    label.debug {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="label">Current Site:</div>
+  <div id="site" class="value">...</div>
+
+  <div class="label">Blocked on Site:</div>
+  <div id="siteCount" class="value">0</div>
+
+  <div class="label">Total Blocked:</div>
+  <div id="total" class="value">0</div>
+
+  <div id="controls">
+    <button id="resetBtn">Reset Stats</button>
+    <label class="debug">
+      <input type="checkbox" id="debugToggle" />
+      Debug
+    </label>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
